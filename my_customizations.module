@@ -1,0 +1,69 @@
+<?php 
+/**
+ * @file - module file for axelerant technology test
+ * @author - mehul.webprogrammer@gmail.com
+ * @created - 16 FEb 2016
+ * @license - open source
+ */
+
+function my_customizations_form_system_site_information_settings_alter(&$form, &$form_state, $form_id) {
+  //Adding additional textfield to add API key
+  $form['site_information']['siteapikey'] = array(
+    "#type" => "textfield",
+    "#title" => t("Site API Key"),
+    "#default_value" => variable_get("siteapikey", "No API Key yet"),
+    "#weight" => -99,
+  );
+  //Adding additional submit function to set message when form is submitted
+  $form['#submit'][] = 'my_customizations_site_inforamtion_submit';
+  //Change the name of the "save configuration" button to "update configuration"
+  $form['actions']['submit']['#value'] = t("Update Configuration");
+}
+
+function my_customizations_site_inforamtion_submit($form, &$form_state) {
+  //Adding message to show the user that which new API key is saved
+  drupal_set_message(t("Site API Key has been saved with value '@value'", 
+    array("@value" => $form_state['values']['siteapikey'])));	
+}
+
+function my_customizations_menu() {
+  $items = array();
+  $items['my_customizations'] = array(
+    'type' => MENU_CALLBACK,
+    'page callback' => 'my_customizations_api_callback',
+    'page arguments' => array(1,2),
+    'access callback' => TRUE,
+  );
+  return $items;
+}
+
+function my_customizations_api_callback($apikey=NULL, $nid=NULL) {
+  if (!empty($apikey) && ($apikey != "No API Key yet")) {
+  	$correct_key = variable_get("siteapikey", "No API Key yet");
+  	//if API key is wrong show access denied message.
+  	if ($apikey!=$correct_key) {
+  	  drupal_access_denied();
+  	}
+  	//Show page not found page if nid is null but API key are correct.
+  	if (empty($nid)) {
+  	  drupal_not_found();
+  	}
+  	//Show json node object data if nid & API key are correct
+  	if ($apikey==$correct_key) {
+  	  $node_object = node_load($nid);
+  	  //Show page not found page if node is not existing on the system
+  	  if (empty($node_object)) {
+  	  	drupal_not_found();
+  	  }
+  	  else {
+  	  	//change page delivery callback type to only return json
+  	  	$delivery_callback = "drupal_json_output";
+        drupal_deliver_page($node_object, $delivery_callback);
+  	  }
+  	}
+  }
+  else {
+  	//Show access denied information if API key is not entered
+  	drupal_access_denied();
+  }
+}
