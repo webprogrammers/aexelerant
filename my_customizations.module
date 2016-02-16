@@ -6,6 +6,16 @@
  * @license - open source
  */
 
+/**
+ * Implementing hook_form_FORM_ID_alter()
+ *   Allows to alter form data of drupal form with form id as FORM_ID
+ * @param $form
+ *   Array of form element
+ * @param $form_state 
+ *   Array of form state values
+ * @param $form_id
+ *   Id of the form element
+ */
 function my_customizations_form_system_site_information_settings_alter(&$form, &$form_state, $form_id) {
   //Adding additional textfield to add API key
   $form['site_information']['siteapikey'] = array(
@@ -20,12 +30,26 @@ function my_customizations_form_system_site_information_settings_alter(&$form, &
   $form['actions']['submit']['#value'] = t("Update Configuration");
 }
 
+/**
+ * Implementing hook_form_submit()
+ *   Allows to do additional processes on submit of form
+ * @param $form
+ *   Array of form element
+ * @param $form_state 
+ *   Array of form state values
+ */
 function my_customizations_site_inforamtion_submit($form, &$form_state) {
   //Adding message to show the user that which new API key is saved
   drupal_set_message(t("Site API Key has been saved with value '@value'", 
     array("@value" => $form_state['values']['siteapikey'])));	
 }
 
+/**
+ * Implementing hook_menu()
+ *   Allows to create menu items
+ * @return array $items
+ *   Array of menu items
+ */
 function my_customizations_menu() {
   $items = array();
   $items['my_customizations'] = array(
@@ -37,6 +61,14 @@ function my_customizations_menu() {
   return $items;
 }
 
+/**
+ * Implementing my_customizations_api_callback() 
+ *   Custom function to show node json data and dislay access denied page
+ * @param $apikey
+ *   The site api key
+ * @param $nid
+ *   Node id to show the data
+ */
 function my_customizations_api_callback($apikey=NULL, $nid=NULL) {
   if (!empty($apikey) && ($apikey != "No API Key yet")) {
   	$correct_key = variable_get("siteapikey", "No API Key yet");
