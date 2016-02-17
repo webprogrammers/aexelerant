@@ -55,10 +55,35 @@ function my_customizations_menu() {
   $items['my_customizations'] = array(
     'type' => MENU_CALLBACK,
     'page callback' => 'my_customizations_api_callback',
-    'page arguments' => array(1,2),
-    'access callback' => TRUE,
+    'page arguments' => array(2),
+    'access callback' => 'my_cusomizations_api_access_callback',
+    'access arguments' => array(1,2),
   );
   return $items;
+}
+
+/**
+ * Implementing my_cusomizations_api_access_callback()
+ *   A custom access callback for the api
+ * @param $apikey
+ *   API key for API
+ * @param $nid
+ *   Node id of the node to be loaded
+ */
+function my_cusomizations_api_access_callback($apikey=NULL, $nid=NULL) {
+  if (empty($apikey) || ($apikey == "No API Key yet") || empty($nid)) {
+    return FALSE;
+  }
+  else {
+  	$correct_key = variable_get("siteapikey", "No API Key yet");
+  	$node_object = node_load($nid);
+  	if (($apikey == $correct_key) && !empty($node_object) && ($node_object->type == "page")) {
+  	  return TRUE;
+  	}
+  	else {
+  	  return FALSE;
+  	}
+  }
 }
 
 /**
@@ -69,33 +94,15 @@ function my_customizations_menu() {
  * @param $nid
  *   Node id to show the data
  */
-function my_customizations_api_callback($apikey=NULL, $nid=NULL) {
-  if (!empty($apikey) && ($apikey != "No API Key yet")) {
-  	$correct_key = variable_get("siteapikey", "No API Key yet");
-  	//if API key is wrong show access denied message.
-  	if ($apikey!=$correct_key) {
-  	  drupal_access_denied();
-  	}
-  	//Show page not found page if nid is null but API key are correct.
-  	if (empty($nid)) {
-  	  drupal_not_found();
-  	}
-  	//Show json node object data if nid & API key are correct
-  	if ($apikey==$correct_key) {
+function my_customizations_api_callback($nid=NULL) {
+  if (!empty($nid)) {
   	  $node_object = node_load($nid);
-  	  //Show page not found page if node is not existing on the system
-  	  if (empty($node_object)) {
-  	  	drupal_not_found();
-  	  }
-  	  else {
-  	  	//change page delivery callback type to only return json
-  	  	$delivery_callback = "drupal_json_output";
-        drupal_deliver_page($node_object, $delivery_callback);
-  	  }
-  	}
+  	  //change page delivery callback type to only return json
+  	  $delivery_callback = "drupal_json_output";
+      drupal_deliver_page($node_object, $delivery_callback);
   }
   else {
-  	//Show access denied information if API key is not entered
+  	//It will never come here due to access callback check, but in case if arrives
   	drupal_access_denied();
   }
 }
